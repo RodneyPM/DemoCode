@@ -1,0 +1,171 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+
+</div>
+<div class="bg-light d-flex p-2" role="alert">
+
+    <div class="mr-2">
+
+        <button id="addUser" class="btn btn-primary" data-toggle="modal" data-target="#exampleModalCenter">Add New User</button>
+
+    </div>
+
+    <div class="mr-auto"></div>
+
+</div>
+
+
+
+<div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalCenterTitle">User Details</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+
+                @*hidden userId*@
+                <input type="hidden" id="UserId" />
+
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Name</span>
+                    </div>
+                    <input type="text" class="form-control" id="Name" />
+                </div>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text" id="inputGroup-sizing-default">Surname</span>
+                    </div>
+                    <input type="text" class="form-control" id="Surname" />
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+
+                <button type="button" id="saveUser" class="btn btn-primary">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+<table id="usersTable" class="display">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Surname</th>
+            <th></th>
+        </tr>
+    </thead>
+</table>
+
+
+<link href="~/css/jquery-ui.css" rel="stylesheet" />
+<link href="~/css/datatables.min.css" rel="stylesheet" />
+<link href="~/css/responsive.dataTables.min.css" rel="stylesheet" />
+<link href="~/css/fixedHeader.dataTables.min.css" rel="stylesheet" />
+@section scripts{
+
+    <script src="~/js/datatables.min.js"></script>
+    <script src="~/js/jquery-ui.min.js"></script>
+    <script src="~/js/dataTables.responsive.min.js"></script>
+    <script src="~/js/dataTables.fixedHeader.min.js"></script>
+
+    <script>
+        var table;
+
+        $(document).ready(function () {
+
+            table = $("#usersTable").DataTable({
+                 dom: 'Bfrtip',
+                processing: true,
+                paging: false,
+                sort: false,
+                searching: false,
+                info: false,
+                responsive: true,
+                fixedHeader: true,
+                ajax: {
+                    url: '@Url.Action("GetUsers")',
+                    method: 'get',
+                    dataSrc: ""
+
+                },
+                columns: [
+                    { data: 'name' },
+                    { data: 'surname' },
+                    {
+                        data: null,
+                        render: function (data) {
+                            return '<button class="btn btn-dark btn-sm editUser" data-toggle="modal" data-target="#exampleModalCenter">Edit</button>';
+                        }
+
+                    }
+                ],
+                initComplete: function (settings) {
+                    //initialise table
+                },
+                drawCallback: function (settings) {
+                    //reload 
+                }
+            });
+
+            $("#addUser").click(function () {
+                console.log('works');
+            });
+
+            $("#saveUser").click(saveUser)
+            $("#usersTable").on('click', 'tbody .editUser', getUserInfo)
+
+             $("#exampleModalCenter").on('hidden.bs.modal',
+                clearInput);
+        });
+
+        function saveUser() {
+
+            const userId = $("#UserId").val() === "" ? 0 : $("#UserId").val();
+            const name = $("#Name").val();
+            const surname = $("#Surname").val();
+            
+            const model = {
+                userId: userId,
+                Name: name,
+                Surname: surname
+            };
+
+            $.post('@Url.Action("SaveUser")', model, function () {
+                console.log('success');
+                table.ajax.reload();
+            })
+        }
+
+        function getUserInfo() {
+
+            const rowSelected = table.row($(this).closest('tr')).data();
+
+            
+            const userId = rowSelected.userId;
+            const name = rowSelected.name;
+            const surname = rowSelected.surname;
+
+            $("#Name").val(name);
+            $("#Surname").val(surname);
+            $("#UserId").val(userId);
+
+            
+        }
+
+        function clearInput() {
+             $("#Name").val('');
+            $("#Surname").val('');
+            $("#UserId").val('');
+        }
+    </script>
+}
